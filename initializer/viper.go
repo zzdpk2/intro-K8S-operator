@@ -1,6 +1,9 @@
 package initializer
 
-import "github.com/spf13/viper"
+import (
+	"github.com/spf13/viper"
+	"kubeproj.com/global"
+)
 
 func Viper() {
 	v := viper.New()
@@ -8,6 +11,11 @@ func Viper() {
 	v.SetConfigType("yaml")
 
 	err := v.ReadInConfig()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	err = v.Unmarshal(&global.CONF)
 	if err != nil {
 		panic(err.Error())
 	}
