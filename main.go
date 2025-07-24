@@ -2,12 +2,12 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"kubeproj.com/Initializer"
+	"kubeproj.com/initializer"
 	"net/http"
 )
 
 func main() {
-	Initializer.Routers()
+	initializer.Routers()
 
 	r := gin.Default()
 	r.GET("/ping", func(c *gin.Context) {

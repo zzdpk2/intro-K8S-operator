@@ -1,4 +1,4 @@
-package Initializer
+package initializer
 
 import "github.com/spf13/viper"
 
