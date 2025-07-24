@@ -1,13 +1,19 @@
 package main
 
 import (
-	"kubeproj.com/api"
+	"github.com/gin-gonic/gin"
+	"kubeproj.com/Initializer"
+	"net/http"
 )
-import "github.com/gin-gonic/gin"
 
 func main() {
+	Initializer.Routers()
+
 	r := gin.Default()
-	exampleGroup := api.ApiGroupApp.ExampleApiGroup
-	r.GET("/ping", exampleGroup.ExampleTest)
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "pong",
+		})
+	})
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 }
