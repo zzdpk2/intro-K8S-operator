@@ -8,6 +8,7 @@ import (
 func main() {
 	r := initializer.Routers()
 	initializer.Viper()
+	initializer.KubernetesClient()
 	panic(r.Run(global.CONF.System.Addr))
 	// r := gin.Default()
 	// r.GET("/ping", func(c *gin.Context) {
