@@ -14,7 +14,8 @@ type PodApi struct {
 
 func (*PodApi) GetPodList(c *gin.Context) {
 	ctx := context.TODO()
-	list, err := global.KubeConfigSet.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	// list, err := global.KubeConfigSet.CoreV1().Namespaces().List(ctx, metav1.ListOptions{})
+	list, err := global.KubeConfigSet.CoreV1().Pods("").List(ctx, metav1.ListOptions{})
 	if err != nil {
 		fmt.Println(err.Error())
 	}
