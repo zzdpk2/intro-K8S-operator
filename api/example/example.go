@@ -2,14 +2,14 @@ package example
 
 import (
 	"github.com/gin-gonic/gin"
-	"net/http"
+	"kubeproj.com/response"
 )
 
 type ExampleApi struct {
 }
 
 func (*ExampleApi) ExampleTest(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
+	response.SuccessWithDetail(c, "Requested succeeded!", map[string]string{
 		"message": "pong",
 	})
 }
