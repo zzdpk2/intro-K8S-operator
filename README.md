@@ -1,4 +1,6 @@
 # intro-K8S-operator
 
 
-# Dev branch initiated
+## - Dev branch initiated
+
+## - Jenkins and Gogs integrated
