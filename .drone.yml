@@ -1,14 +1,68 @@
 kind: pipeline
 type: docker
-name: build
-
-trigger:
-  event:
-    - push
-    - pull_request
+name: kubeproj-server-publish
 
 steps:
-  - name: hello
-    image: alpine:3.20
-    commands:
-      - echo "Hello from Drone on $(date)"
+  - name: build-push
+    image: plugins/docker
+    volumes:
+      - name: hosts
+        path: /etc/hosts
+      - name: docker-ca
+        path: /etc/docker
+      - name: dockersock
+        path: /var/run/docker.sock
+    settings:
+      registry: 192.168.44.134
+      repo: 192.168.44.134/kubeproj/myserver
+      username:
+        from_secret: harbor_username     # 新增：建议把 Harbor 账号放到 secret
+      password:
+        from_secret: harbor_password
+      tags:
+        - v1.1
+        - latest
+        - ${DRONE_COMMIT_SHA:0:7}        # 方便回滚
+      # 需要的话可指定 Dockerfile / build context
+      # dockerfile: Dockerfile
+      # context: .
+
+  - name: deploy-ssh
+    image: appleboy/drone-ssh
+    settings:
+      host: 192.168.44.138               # 这里填你的目标部署主机 IP
+      port: 22
+      username: rex
+      password:
+        from_secret: ssh_password
+      # 把 Harbor 凭据注入到脚本环境，便于 docker login
+      envs: [HARBOR_USERNAME, HARBOR_PASSWORD]
+      environment:
+        HARBOR_USERNAME:
+          from_secret: harbor_username
+        HARBOR_PASSWORD:
+          from_secret: harbor_password
+      script:
+        - IMAGE=192.168.44.134/kubeproj/myserver
+        - TAG=v1.4
+        - CONTAINER=kubeproj-server
+        - docker login 192.168.44.134 -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
+        # 如存在旧/新容器名，先停止并删除
+        - for C in kubeimooc-server ${CONTAINER}; do
+            if [ "$(docker ps -a --format '{{.Names}}' | grep -w $C | wc -l)" -ge 1 ]; then
+              docker stop $C || true && docker rm $C || true;
+            fi;
+          done
+        - docker pull ${IMAGE}:${TAG}
+        - docker run --name ${CONTAINER} --restart=always -d -p 8082:8082 ${IMAGE}:${TAG}
+
+volumes:
+  - name: hosts
+    host:
+      path: /etc/hosts
+  - name: docker-ca
+    host:
+      path: /etc/docker
+  - name: dockersock
+    host:
+      path: /var/run/docker.sock
