@@ -26,13 +26,14 @@ steps:
       # 需要的话可指定 Dockerfile / build context
       # dockerfile: Dockerfile
       # context: .
+      insecure: true   # ✅ 核心设置
 
   - name: deploy-ssh
     image: appleboy/drone-ssh
     settings:
       host: 192.168.44.138               # 这里填你的目标部署主机 IP
       port: 22
-      username: rex
+      username: root
       password:
         from_secret: ssh_password
       # 把 Harbor 凭据注入到脚本环境，便于 docker login
@@ -44,11 +45,11 @@ steps:
           from_secret: harbor_password
       script:
         - IMAGE=192.168.44.134/kubeproj/myserver
-        - TAG=v1.4
+        - TAG=v1.1
         - CONTAINER=kubeproj-server
         - docker login 192.168.44.134 -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
         # 如存在旧/新容器名，先停止并删除
-        - for C in kubeimooc-server ${CONTAINER}; do
+        - for C in kubeproj-server ${CONTAINER}; do
             if [ "$(docker ps -a --format '{{.Names}}' | grep -w $C | wc -l)" -ge 1 ]; then
               docker stop $C || true && docker rm $C || true;
             fi;
