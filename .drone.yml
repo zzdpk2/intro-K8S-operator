@@ -43,10 +43,29 @@ steps:
           from_secret: harbor_username
         HARBOR_PASSWORD:
           from_secret: harbor_password
-      script:
-        - if [ "$(docker ps -a --format '{{.Names}}' | grep -w kubeproj-server | wc -l)" -ge 1 ]; then docker stop kubeproj-server && docker rm kubeproj-server; fi
-        - docker pull 192.168.44.134/kubeproj/myserver:v1.1
-        - docker run --name kubeproj-server --restart=always -d -p 8082:8082 192.168.44.134/kubeproj/myserver:v1.1}
+      script: |
+        set -e
+        # 1) 明确写死并剔除潜在的 CR/LF
+        IMG_RAW='192.168.44.134/kubeproj/myserver:v1.1'
+        IMAGE="$(printf '%s' "$IMG_RAW" | tr -d '\r\n')"
+        CONTAINER='kubeproj-server'
+      
+        # 2) 可选：先登录（若目标机还没 docker login）
+        # docker login 192.168.44.134 -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
+      
+        # 3) 打印调试：显示镜像字符串及其字节（方便确认有没有 \r）
+        echo "IMAGE=<${IMAGE}>"
+        printf '%s' "$IMAGE" | od -An -t x1
+      
+        # 4) 清理旧容器
+        if docker ps -a --format '{{.Names}}' | grep -qw "$CONTAINER"; then
+        docker stop "$CONTAINER" || true
+        docker rm "$CONTAINER" || true
+        fi
+      
+        # 5) 拉取并运行（注意 -p 前后有空格）
+        docker pull "$IMAGE"
+        docker run --name "$CONTAINER" --restart=always -d -p 8082:8082 "$IMAGE"
 
 volumes:
   - name: hosts
